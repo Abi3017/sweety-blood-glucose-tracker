@@ -1,0 +1,50 @@
+# Starts PostgreSQL, the API and the web app:
+#   docker compose up --build
+# Then seed demo data (optional):
+#   docker compose exec api npm run seed
+# App: http://localhost:8080   API: http://localhost:5000/api
+#
+# The credentials below are local-development placeholders only.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sweety
+      POSTGRES_PASSWORD: sweety
+      POSTGRES_DB: sweety_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sweety -d sweety_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://sweety:sweety@db:5432/sweety_dev?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-local-docker-secret-please-replace}
+      JWT_EXPIRES_IN: 1d
+      PORT: 5000
+      CLIENT_URL: http://localhost:8080
+      NODE_ENV: production
+      APP_TIMEZONE: Asia/Kolkata
+      COOKIE_SECURE: "false"
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

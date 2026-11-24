@@ -1,0 +1,54 @@
+// Sweety – Blood Glucose Tracker
+// PostgreSQL schema managed by Prisma.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// The four fixed measurement slots of a day.
+enum TimeSlot {
+  MORNING
+  AFTER_BREAKFAST
+  AFTER_LUNCH
+  AFTER_DINNER
+}
+
+model User {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(100)
+  email     String    @unique @db.VarChar(255)
+  /// bcrypt hash – the plain-text password is never stored.
+  password  String    @db.VarChar(255)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  readings  Reading[]
+
+  @@map("users")
+}
+
+model Reading {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  /// Calendar date only (no time component).
+  readingDate  DateTime @map("reading_date") @db.Date
+  timeSlot     TimeSlot @map("time_slot")
+  /// Whole number in mg/dL, 40–600 (also enforced by a CHECK constraint).
+  glucoseValue Int      @map("glucose_value")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  /// Deleting a user deletes all of their readings.
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// One reading per user, per date, per time slot.
+  @@unique([userId, readingDate, timeSlot], name: "userId_readingDate_timeSlot")
+  /// Speeds up per-user date-range report queries.
+  @@index([userId, readingDate])
+  @@index([readingDate])
+  @@map("readings")
+}
