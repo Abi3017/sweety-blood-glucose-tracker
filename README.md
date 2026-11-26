@@ -57,7 +57,7 @@ It is built with a **React (Vite) frontend**, a **Node.js + Express REST API** a
 - **Month-to-date**: the 1st of the selected month through the selected date.
 - **Previous month**: the whole calendar month before the reference date.
 - Each report shows highest, lowest, average (one decimal) and the number of readings, or a friendly empty state.
-- Recharts line chart of readings over the month (one line per slot) plus a table view of the same data.
+- Charts of readings over the month (several views, see Dashboard) plus a table view of the same data.
 
 **Dashboard**
 - Greeting, week strip for jumping between days, a dashed progress ring (readings logged out of four) with a day streak, one card per time slot with quick add/edit, Highest / Lowest / Average cards, a smooth-curve chart through the day, and a monthly section.
@@ -136,12 +136,13 @@ It is built with a **React (Vite) frontend**, a **Node.js + Express REST API** a
 |---|---|
 | `users` | `id` UUID PK, `name`, `email` (unique), `password` (bcrypt hash), `created_at`, `updated_at` |
 | `readings` | `id` UUID PK, `user_id` FK → users (ON DELETE CASCADE), `reading_date` DATE, `time_slot` enum, `glucose_value` INT, `created_at`, `updated_at` |
+| `appointments` | `id` UUID PK, `user_id` FK → users (ON DELETE CASCADE), `doctor`, `specialty`, `date` (`YYYY-MM-DD`), `time` (`HH:MM`), `location`, `notes`, `created_at`, `updated_at` |
 
 - `TimeSlot` enum: `MORNING`, `AFTER_BREAKFAST`, `AFTER_LUNCH`, `AFTER_DINNER`.
 - Unique constraint on `(user_id, reading_date, time_slot)`.
-- Indexes on `(user_id, reading_date)` and `reading_date` for report queries.
+- Indexes on `(user_id, reading_date)` and `reading_date` for report queries, and on `(user_id, date)` for appointments.
 - `CHECK (glucose_value BETWEEN 40 AND 600)` as a database-level safety net.
-- Deleting a user deletes their readings.
+- Deleting a user deletes their readings and appointments.
 
 **How the 4-per-day rule stays reliable**: creating or updating a reading runs inside a database transaction that first takes a PostgreSQL advisory lock for that user and date (`pg_advisory_xact_lock`). Concurrent requests for the same day are processed one at a time, so the daily count and duplicate-slot checks are always accurate. The unique index is a final guard, and the backend tests fire concurrent requests to prove it.
 
@@ -164,10 +165,10 @@ sweety-blood-glucose-tracker/
 │   ├── prisma/
 │   │   ├── migrations/            # SQL migrations (incl. CHECK constraint)
 │   │   ├── schema.prisma
-│   │   └── seed.js                # demo user + sample readings
+│   │   └── seed.js                # demo user + sample readings and appointments
 │   ├── src/
 │   │   ├── config/                # env loading, Prisma client
-│   │   ├── controllers/           # auth, reading, report
+│   │   ├── controllers/           # auth, reading, report, appointment, demo
 │   │   ├── middleware/            # auth, validation, csrf, error
 │   │   ├── routes/                # /api/auth, /api/readings, /api/reports, /api/appointments, /api/demo
 │   │   ├── services/              # business logic + database access
@@ -183,19 +184,23 @@ sweety-blood-glucose-tracker/
 │   │   ├── components/
 │   │   │   ├── common/            # Button, FormField, StatCard, states, dialogs…
 │   │   │   ├── layout/            # Navbar, AppLayout, AuthLayout, route guards
-│   │   │   ├── dashboard/         # SlotGrid, DailySlotChart
-│   │   │   ├── readings/          # ReadingForm, ReadingsTable, filters, pagination
-│   │   │   └── reports/           # StatsGrid, GlucoseTrendChart, tabs, tables
+│   │   │   ├── dashboard/         # SlotCards, DashedRing, MetricTile, WeekStrip, DailySlotChart…
+│   │   │   ├── readings/          # ReadingForm, ReadingsTable, ReadingsTimeline, filters, pagination
+│   │   │   ├── reports/           # GlucoseTrendChart and its views (calendar, bubbles, radial…), tabs, tables
+│   │   │   ├── food/              # MealCard, TimedMealCard, PlateGuide
+│   │   │   ├── appointments/      # AppointmentForm, AppointmentRow, NextAppointment
+│   │   │   └── reminders/         # RemindersCard
 │   │   ├── context/               # AuthContext, ToastContext
-│   │   ├── hooks/                 # useAsync, useDocumentTitle
-│   │   ├── pages/                 # Login, Register, Dashboard, Readings, ReadingFormPage, Reports, Profile, NotFound
-│   │   ├── services/              # api.js, authService, readingService, reportService
+│   │   ├── hooks/                 # useAsync, useNow, useCountUp, useDocumentTitle…
+│   │   ├── pages/                 # Login, Register, Dashboard, Readings, ReadingFormPage, Reports, FoodPlan, Appointments, Profile, NotFound
+│   │   ├── services/              # api.js, authService, readingService, reportService, appointmentService
 │   │   ├── test/                  # React Testing Library tests
 │   │   ├── utils/  validations/
 │   │   ├── App.jsx  main.jsx  index.css
 │   ├── nginx.conf  Dockerfile  vite.config.js
 ├── docs/screenshots/
 ├── docker-compose.yml
+├── render.yaml                    # Render Blueprint (database + API + frontend)
 ├── .env.example
 └── README.md
 ```
@@ -283,7 +288,7 @@ cd backend
 npm run seed
 ```
 
-This creates the demo user and about 270 sample readings covering the previous two months and the current month up to today. Re-running the seed resets the demo user's readings.
+This creates the demo user, sample readings covering the previous two months and the current month up to today, and two sample appointments. Re-running the seed resets the demo user's readings and appointments.
 
 ---
 
@@ -482,7 +487,7 @@ Notes:
 - **Average** is rounded half-up to one decimal using integer arithmetic (e.g. 130.25 → 130.3).
 - **Authentication**: registration logs the user in immediately. Without "keep me signed in" the cookie lasts for the browser session; with it, the cookie lasts until the JWT expires (`JWT_EXPIRES_IN`).
 - **Another user's reading** returns 404 rather than 403, so the API does not reveal that the id exists.
-- **Deleting a user** cascades to their readings. There is no delete-account endpoint because it was not required.
+- **Deleting a user** cascades to their readings and appointments. There is no delete-account endpoint because it was not required.
 
 ### Known limitations
 
