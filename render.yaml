@@ -4,9 +4,9 @@
 # The frontend forwards /api/* to the API, so the browser only talks to one origin and the
 # auth cookie stays first-party (the API uses SameSite=Strict cookies).
 #
-# The two public URLs below assume the service names are free on Render. If Render gives
-# you different hostnames (e.g. sweety-web-x1y2.onrender.com), update CLIENT_URL on the
-# API service and the /api rewrite destination on the frontend, then redeploy.
+# The two public URLs below are this deployment's Render hostnames. If you redeploy under a
+# different name or workspace, update CLIENT_URL on the API service and the /api rewrite
+# destination on the frontend to match.
 
 databases:
   - name: sweety-db
@@ -37,7 +37,7 @@ services:
         value: Asia/Kolkata
       # Must equal the public URL of the frontend (CORS + CSRF origin check).
       - key: CLIENT_URL
-        value: https://sweety-web.onrender.com
+        value: https://sweety-web-3nao.onrender.com
 
   - type: web
     name: sweety-web
@@ -49,7 +49,7 @@ services:
       # Same-origin API proxy.
       - type: rewrite
         source: /api/*
-        destination: https://sweety-api.onrender.com/api/*
+        destination: https://sweety-api-16zd.onrender.com/api/*
       # Client-side routing.
       - type: rewrite
         source: /*
