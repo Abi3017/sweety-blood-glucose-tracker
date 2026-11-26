@@ -8,6 +8,7 @@ export const MEAL_TABS = [
   { key: 'lunch', label: 'Lunch', emoji: '☀️' },
   { key: 'dinner', label: 'Dinner', emoji: '🌙' },
   { key: 'snack', label: 'Snacks', emoji: '🍎' },
+  { key: 'night', label: 'Late night', emoji: '🌃' },
 ];
 
 export const MEALS = {
@@ -35,6 +36,12 @@ export const MEALS = {
     { id: 's3', emoji: '🍎', name: 'Apple slices with peanut butter', description: 'Half an apple with a teaspoon of unsweetened peanut butter.', tags: ['Fibre', 'Protein'] },
     { id: 's4', emoji: '🥚', name: 'Boiled egg or roasted chana', description: 'One boiled egg, or a small bowl of roasted chickpeas.', tags: ['Protein', 'Filling'] },
   ],
+  night: [
+    { id: 'n1', emoji: '🥛', name: 'A glass of warm milk', description: 'Plain, unsweetened milk, warm, if you need something before bed.', tags: ['Light', 'Unsweetened'] },
+    { id: 'n2', emoji: '🥣', name: 'A small bowl of plain curd', description: 'A few spoons of plain curd, with no sugar added.', tags: ['Protein', 'Light'] },
+    { id: 'n3', emoji: '🌰', name: 'A few soaked almonds', description: 'Four or five almonds are plenty.', tags: ['Healthy fats', 'Small portion'] },
+    { id: 'n4', emoji: '🍵', name: 'Herbal tea, no sugar', description: 'A cup of caffeine-free herbal tea such as chamomile.', tags: ['Caffeine-free', 'Zero sugar'] },
+  ],
 };
 
 /** The plate method: a simple way to portion a meal. */
@@ -54,11 +61,16 @@ export const HABITS = [
 export const FOOD_DISCLAIMER =
   "These are general healthy-eating ideas, not a personal diet plan or medical advice. Please follow your doctor's or dietitian's guidance, especially if you take diabetes medication or insulin.";
 
-const SLOT_TO_MEAL = { MORNING: 'breakfast', AFTER_BREAKFAST: 'breakfast', AFTER_LUNCH: 'lunch', AFTER_DINNER: 'dinner' };
-
-/** Which meal to suggest next: the one for the first time slot without a reading today. */
-export function suggestedMealKey(readings, slots) {
-  const logged = new Set(readings.map((r) => r.timeSlot));
-  const next = slots.find((s) => !logged.has(s));
-  return next ? SLOT_TO_MEAL[next] : 'snack';
+/**
+ * Which meal fits the clock. Evening starts at 5 PM, so at 5:41 PM the suggestion is dinner.
+ * Returns the meal key, a short title and a one-line note about the time of day.
+ */
+export function mealForTime(now = new Date()) {
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  if (minutes >= 300 && minutes < 630) return { key: 'breakfast', title: 'Breakfast time', note: 'Start the day with something filling.' };
+  if (minutes >= 630 && minutes < 720) return { key: 'snack', title: 'Mid-morning', note: "A light bite if you're hungry before lunch." };
+  if (minutes >= 720 && minutes < 960) return { key: 'lunch', title: 'Lunch time', note: 'A balanced midday meal keeps the afternoon steady.' };
+  if (minutes >= 960 && minutes < 1020) return { key: 'snack', title: 'Late afternoon', note: 'A small snack can tide you over until dinner.' };
+  if (minutes >= 1020 && minutes < 1290) return { key: 'dinner', title: 'Dinner time', note: 'Evening is here. Try to finish dinner a couple of hours before bed, and keep it light.' };
+  return { key: 'night', title: 'Late night', note: 'It is late. If you need anything, keep it small and light.' };
 }

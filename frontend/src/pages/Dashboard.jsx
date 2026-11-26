@@ -8,7 +8,7 @@ import MetricTile from '../components/dashboard/MetricTile';
 import MonthDonut from '../components/dashboard/MonthDonut';
 import ProgressSummary from '../components/dashboard/ProgressSummary';
 import NextAppointment from '../components/appointments/NextAppointment';
-import MealCard from '../components/food/MealCard';
+import TimedMealCard from '../components/food/TimedMealCard';
 import SlotCards from '../components/dashboard/SlotCards';
 import WeekStrip from '../components/dashboard/WeekStrip';
 import DailySlotChart from '../components/dashboard/DailySlotChart';
@@ -21,7 +21,6 @@ import { splitAppointments } from '../utils/appointments';
 import { getDailyReport, getMonthToDateReport, getPreviousMonthReport } from '../services/reportService';
 import { formatDate, formatLongDate, formatRange, todayISO } from '../utils/dates';
 import { calculateStreak } from '../utils/streak';
-import { suggestedMealKey } from '../utils/foodPlan';
 import { TIME_SLOTS } from '../utils/timeSlots';
 import { MAX_READINGS_PER_DAY } from '../utils/messages';
 
@@ -173,7 +172,7 @@ export default function Dashboard() {
               )}
             </Card>
 
-            <MealCard key={suggestedMealKey(report.readings, TIME_SLOTS)} mealKey={suggestedMealKey(report.readings, TIME_SLOTS)} compact linkTo="/food-plan" />
+            <TimedMealCard compact linkTo="/food-plan" />
           </div>
         </div>
       )}
