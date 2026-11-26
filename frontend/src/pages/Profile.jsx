@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Mail, CalendarDays, Activity, UserRound } from 'lucide-react';
+import { LogOut, Mail, CalendarDays, Activity, UserRound, Sparkles } from 'lucide-react';
 import Card, { CardHeader } from '../components/common/Card';
 import Button from '../components/common/Button';
 import PageHeader from '../components/layout/PageHeader';
@@ -9,6 +10,7 @@ import { useToast } from '../context/ToastContext';
 import { useAsync } from '../hooks/useAsync';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { getCurrentUser } from '../services/authService';
+import { addSampleData } from '../services/appointmentService';
 import { formatDateTime } from '../utils/dates';
 
 function Row({ icon: Icon, label, value }) {
@@ -31,6 +33,21 @@ export default function Profile() {
   const toast = useToast();
   const navigate = useNavigate();
   const { data: profile, loading, error, reload } = useAsync(getCurrentUser, []);
+
+  const [adding, setAdding] = useState(false);
+
+  const handleSampleData = async () => {
+    setAdding(true);
+    try {
+      const counts = await addSampleData();
+      toast.success(`Added ${counts.readings} sample readings. Open the Dashboard to see them.`);
+      reload();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -60,6 +77,19 @@ export default function Profile() {
           </Button>
         </div>
       </Card>
+
+      {profile && profile.totalReadings === 0 && (
+        <Card className="mt-6 max-w-2xl">
+          <CardHeader title="Try it with sample data" description="Fill your account with about four weeks of example readings and two appointments, so the charts and reports have something to show." />
+          <div className="px-5 py-4">
+            <Button onClick={handleSampleData} loading={adding}>
+              <Sparkles className="h-4 w-4" aria-hidden />
+              Add sample data
+            </Button>
+            <p className="mt-3 text-xs text-slate-400">These are made-up numbers for demonstration, not medical data. This option only appears while your account has no readings.</p>
+          </div>
+        </Card>
+      )}
     </>
   );
 }

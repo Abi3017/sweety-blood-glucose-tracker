@@ -7,7 +7,7 @@ import { todayISO } from '../../utils/dates';
 const EMPTY = { doctor: '', specialty: '', date: todayISO(), time: '10:00', location: '', notes: '' };
 
 /** Add / edit form. `initial` is an existing appointment when editing. */
-export default function AppointmentForm({ initial, onSave, onCancel }) {
+export default function AppointmentForm({ initial, onSave, onCancel, saving = false }) {
   const [values, setValues] = useState(() => (initial ? { ...EMPTY, ...initial } : EMPTY));
   const [errors, setErrors] = useState({});
 
@@ -60,10 +60,10 @@ export default function AppointmentForm({ initial, onSave, onCancel }) {
       </div>
 
       <div className="flex flex-wrap justify-end gap-3 sm:col-span-2">
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button type="submit">{initial?.id ? 'Save changes' : 'Add appointment'}</Button>
+        <Button type="submit" loading={saving}>{initial?.id ? 'Save changes' : 'Add appointment'}</Button>
       </div>
     </form>
   );

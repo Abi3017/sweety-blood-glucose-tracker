@@ -10,6 +10,8 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const readingRoutes = require('./routes/readingRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const demoRoutes = require('./routes/demoRoutes');
 
 const app = express();
 
@@ -41,6 +43,8 @@ app.use('/api', requireCsrfHeader);
 app.use('/api/auth', authRoutes);
 app.use('/api/readings', readingRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/demo', demoRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

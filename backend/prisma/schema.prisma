@@ -19,14 +19,15 @@ enum TimeSlot {
 }
 
 model User {
-  id        String    @id @default(uuid()) @db.Uuid
-  name      String    @db.VarChar(100)
-  email     String    @unique @db.VarChar(255)
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String        @db.VarChar(100)
+  email        String        @unique @db.VarChar(255)
   /// bcrypt hash – the plain-text password is never stored.
-  password  String    @db.VarChar(255)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  readings  Reading[]
+  password     String        @db.VarChar(255)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  readings     Reading[]
+  appointments Appointment[]
 
   @@map("users")
 }
@@ -51,4 +52,25 @@ model Reading {
   @@index([userId, readingDate])
   @@index([readingDate])
   @@map("readings")
+}
+
+/// A doctor appointment. Date and time are stored as the user's local wall-clock strings
+/// ("YYYY-MM-DD" and "HH:MM") so they display the same on every device.
+model Appointment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  doctor    String   @db.VarChar(80)
+  specialty String   @default("") @db.VarChar(60)
+  date      String   @db.VarChar(10)
+  time      String   @db.VarChar(5)
+  location  String   @default("") @db.VarChar(120)
+  notes     String   @default("") @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// Deleting a user deletes their appointments.
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("appointments")
 }

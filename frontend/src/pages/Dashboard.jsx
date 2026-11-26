@@ -8,6 +8,7 @@ import MetricTile from '../components/dashboard/MetricTile';
 import MonthDonut from '../components/dashboard/MonthDonut';
 import ProgressSummary from '../components/dashboard/ProgressSummary';
 import NextAppointment from '../components/appointments/NextAppointment';
+import RemindersCard from '../components/reminders/RemindersCard';
 import TimedMealCard from '../components/food/TimedMealCard';
 import SlotCards from '../components/dashboard/SlotCards';
 import WeekStrip from '../components/dashboard/WeekStrip';
@@ -16,6 +17,7 @@ import GlucoseTrendChart from '../components/reports/GlucoseTrendChart';
 import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useLegacyAppointmentImport } from '../hooks/useLegacyAppointmentImport';
 import { listAppointments } from '../services/appointmentService';
 import { splitAppointments } from '../utils/appointments';
 import { getDailyReport, getMonthToDateReport, getPreviousMonthReport } from '../services/reportService';
@@ -45,7 +47,10 @@ export default function Dashboard() {
   // Previous month lets the streak carry across the 1st of a month.
   const previous = useAsync(() => getPreviousMonthReport(date).catch(() => null), [date]);
 
-  const nextAppointment = splitAppointments(listAppointments(user.id)).upcoming[0];
+  const appointments = useAsync(() => listAppointments().catch(() => null), []);
+  // Moves appointments an earlier version saved in this browser into the account, then refreshes.
+  useLegacyAppointmentImport(user.id, () => appointments.reload());
+  const nextAppointment = splitAppointments(appointments.data ?? []).upcoming[0];
   const report = daily.data;
   const firstName = user?.name?.split(' ')[0] || '';
   const recorded = report ? report.readings.length : 0;
@@ -102,6 +107,12 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      <RemindersCard
+        todayReadings={isToday && report ? report.readings : null}
+        appointments={appointments.data}
+        showReadings={isToday}
+      />
 
       {daily.loading && <LoadingState label="Loading your day…" />}
       {!daily.loading && daily.error && (

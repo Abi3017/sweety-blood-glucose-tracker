@@ -1,43 +1,73 @@
-import { sortAppointments } from '../utils/appointments';
+import api from './api';
 
-/**
- * Appointments are stored in this browser (localStorage), one list per signed-in user.
- * They are not synced to the server or other devices.
- */
-const keyFor = (userId) => `sweety.appointments.${userId}`;
+/** Appointments live in the user's account (server). */
+export async function listAppointments() {
+  const { data } = await api.get('/appointments');
+  return data.data.appointments;
+}
 
-function read(userId) {
+/** Creates the appointment, or updates it when `values.id` is set. Returns the saved appointment. */
+export async function saveAppointment(values) {
+  const { id, ...fields } = values;
+  const { data } = id ? await api.put(`/appointments/${id}`, fields) : await api.post('/appointments', fields);
+  return data.data.appointment;
+}
+
+export async function deleteAppointment(id) {
+  await api.delete(`/appointments/${id}`);
+}
+
+/** Adds about four weeks of sample readings and two appointments to an account with no readings. */
+export async function addSampleData() {
+  const { data } = await api.post('/demo/sample-data');
+  return data.data;
+}
+
+// ---- one-time move of appointments saved in this browser by the earlier version ----
+
+const legacyKey = (userId) => `sweety.appointments.${userId}`;
+
+function readLegacy(userId) {
   try {
-    const parsed = JSON.parse(localStorage.getItem(keyFor(userId)) || '[]');
+    const parsed = JSON.parse(localStorage.getItem(legacyKey(userId)) || '[]');
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-/** Returns false when the browser refuses to store (private mode, quota, blocked storage). */
-function write(userId, list) {
-  try {
-    localStorage.setItem(keyFor(userId), JSON.stringify(list));
-    return true;
-  } catch {
-    return false;
+/**
+ * Uploads appointments that were saved only in this browser, then removes the local copy.
+ * Items that fail validation or upload are skipped, and the local copy is kept if anything failed
+ * so nothing is lost. Returns how many were moved.
+ */
+export async function importLegacyAppointments(userId) {
+  const legacy = readLegacy(userId);
+  if (legacy.length === 0) return 0;
+
+  let moved = 0;
+  let failed = 0;
+  for (const item of legacy) {
+    try {
+      await saveAppointment({
+        doctor: item.doctor,
+        specialty: item.specialty || '',
+        date: item.date,
+        time: item.time,
+        location: item.location || '',
+        notes: item.notes || '',
+      });
+      moved += 1;
+    } catch {
+      failed += 1;
+    }
   }
-}
-
-const newId = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
-
-export const listAppointments = (userId) => sortAppointments(read(userId));
-
-/** Adds the appointment, or replaces the one with the same id. Returns the saved list, or null if it could not be stored. */
-export function saveAppointment(userId, appointment) {
-  const list = read(userId);
-  const saved = { ...appointment, id: appointment.id || newId() };
-  const next = list.some((a) => a.id === saved.id) ? list.map((a) => (a.id === saved.id ? saved : a)) : [...list, saved];
-  return write(userId, next) ? sortAppointments(next) : null;
-}
-
-export function deleteAppointment(userId, id) {
-  const next = read(userId).filter((a) => a.id !== id);
-  return write(userId, next) ? sortAppointments(next) : null;
+  if (failed === 0) {
+    try {
+      localStorage.removeItem(legacyKey(userId));
+    } catch {
+      /* nothing to clean up */
+    }
+  }
+  return moved;
 }

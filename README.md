@@ -1,6 +1,8 @@
 # Sweety – Blood Glucose Tracker
 
-Sweety is a full-stack web app for people with diabetes to record up to four blood glucose readings a day and review daily and monthly reports.
+Sweety is a full-stack web app for people with diabetes to record up to four blood glucose readings a day, review daily and monthly reports, plan meals, and keep track of doctor appointments.
+
+**Live demo:** https://sweety-web-3nao.onrender.com (hosted on Render's free plan, so the first load after a quiet spell can take up to a minute). Register an account, then open **Profile → Add sample data** to see the charts filled in.
 
 It is built with a **React (Vite) frontend**, a **Node.js + Express REST API** and a **PostgreSQL** database accessed through **Prisma**.
 
@@ -58,7 +60,29 @@ It is built with a **React (Vite) frontend**, a **Node.js + Express REST API** a
 - Recharts line chart of readings over the month (one line per slot) plus a table view of the same data.
 
 **Dashboard**
-- Today's (or any selected date's) statistics, the four slot cards with quick add/edit, a daily trend chart and a month-to-date chart.
+- Greeting, week strip for jumping between days, a dashed progress ring (readings logged out of four) with a day streak, one card per time slot with quick add/edit, Highest / Lowest / Average cards, a smooth-curve chart through the day, and a monthly section.
+- The monthly chart has seven views: **Calendar** (heatmap with a details panel), **Daily range**, **Bubbles**, **Radial**, **Distribution**, **By slot** and **Daily average**.
+
+**Reading history**
+- Table or day-by-day timeline layout (remembered per browser), time-slot filter pills, date range filters, pagination and confirm-before-delete.
+
+**Food plan**
+- Meal ideas that follow the time of day (for example, dinner ideas from 5 PM and light options late at night). Other meals are behind a "Browse other meals" button. Also a plate-method guide and daily habits.
+- These are general healthy-eating ideas, not a personal diet plan or medical advice.
+
+**Doctor appointments**
+- Add, edit and delete appointments, saved to your account so they follow you across devices. A countdown card shows the next one on the dashboard, and a "Take this to your visit" card copies a summary of this month's readings.
+- Appointments previously saved in a browser by an earlier version are moved into the account automatically.
+
+**Reminders**
+- A dismissible card reminds you to log the latest due reading slot (Morning 7:00, After breakfast 10:00, After lunch 14:30, After dinner 21:00) and of appointments today or tomorrow.
+- Optional browser notifications, which only fire while Sweety is open in a tab (there is no push or email service).
+
+**Look and feel**
+- Orange theme with dark mode (remembers your choice, follows the system setting at first), an animated mascot, pastel cards, and a mobile bottom navigation bar. Motion respects the "reduce motion" setting.
+
+**Sample data**
+- `POST /api/demo/sample-data` (the Profile page button) fills an account that has no readings with about four weeks of example readings and two appointments. It refuses if the account already has readings.
 
 **Bonus items implemented**: pagination on `GET /api/readings`, monthly line chart, Docker Compose, React Testing Library tests, and a GitHub Actions CI workflow.
 
@@ -145,7 +169,7 @@ sweety-blood-glucose-tracker/
 │   │   ├── config/                # env loading, Prisma client
 │   │   ├── controllers/           # auth, reading, report
 │   │   ├── middleware/            # auth, validation, csrf, error
-│   │   ├── routes/                # /api/auth, /api/readings, /api/reports
+│   │   ├── routes/                # /api/auth, /api/readings, /api/reports, /api/appointments, /api/demo
 │   │   ├── services/              # business logic + database access
 │   │   ├── utils/                 # dates, time slots, messages, AppError
 │   │   ├── validations/           # Zod schemas
@@ -324,9 +348,9 @@ npm test
 
 Each backend test starts from an empty database (tables are truncated before every test).
 
-**Backend coverage (63 tests)**: successful registration, hashed password storage, duplicate email, password rules, login success, incorrect password, unknown email, remember-me cookie, logout, missing/expired/forged tokens, CSRF header, unauthorized reading access (no token and another user's reading), `userId` injection ignored, reading creation, missing glucose value, below 40, above 600, decimals, non-numeric, boundary values 40 and 600, duplicate slot, maximum four per day, concurrent duplicate requests, future date, invalid date, list filters and pagination, reading update (including not counting itself and moving between dates), deletion, cascade delete, daily / month-to-date / previous-month calculations, 1-decimal rounding, year boundary, leap-year February, empty report state and per-user isolation.
+**Backend coverage (74 tests)**: successful registration, hashed password storage, duplicate email, password rules, login success, incorrect password, unknown email, remember-me cookie, logout, missing/expired/forged tokens, CSRF header, unauthorized reading access (no token and another user's reading), `userId` injection ignored, reading creation, missing glucose value, below 40, above 600, decimals, non-numeric, boundary values 40 and 600, duplicate slot, maximum four per day, concurrent duplicate requests, future date, invalid date, list filters and pagination, reading update (including not counting itself and moving between dates), deletion, cascade delete, daily / month-to-date / previous-month calculations, 1-decimal rounding, year boundary, leap-year February, empty report state and per-user isolation, plus appointment create / list order / update / delete, field validation, per-user isolation and cascade delete, and the sample-data endpoint (empty account only, never in the future, cannot run twice).
 
-**Frontend coverage (22 tests)**: login form (validation, show/hide password, success, server error), registration form (required fields, password strength and match, duplicate email from the server, success), reading form (unit label, slots, required value and slot, out-of-range and decimal values, future date, successful submission, duplicate-slot / daily-limit / network errors), reading history (empty state, error state with retry, confirm before delete).
+**Frontend coverage (43 tests)**: login form (validation, show/hide password, success, server error), registration form (required fields, password strength and match, duplicate email from the server, success), reading form (unit label, slots, required value and slot, out-of-range and decimal values, future date, successful submission, duplicate-slot / daily-limit / network errors), reading history (empty state, error state with retry, confirm before delete), day streak, appointment helpers (time formatting, "in N days", upcoming/past split, validation), the meal-by-time rules, and reminders.
 
 GitHub Actions (`.github/workflows/ci.yml`) runs both suites on every push and pull request, with a PostgreSQL service container for the backend.
 
@@ -364,6 +388,25 @@ curl -X POST http://localhost:5000/api/readings \
   -d '{"readingDate":"2026-10-15","timeSlot":"AFTER_LUNCH","glucoseValue":145}'
 ```
 
+### Appointments
+
+All routes need a logged-in user and only ever touch that user's appointments.
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| GET | `/appointments` | `{ appointments }` sorted by date then time |
+| POST | `/appointments` | Body `{ doctor, date: "YYYY-MM-DD", time: "HH:MM", specialty?, location?, notes? }`. `201`; `400` validation; `409` at the 200-appointment limit |
+| PUT | `/appointments/:id` | Same body as POST. `404` for someone else's appointment or a malformed id |
+| DELETE | `/appointments/:id` | `200` or `404` |
+
+Date and time are stored as the user's local wall-clock strings, so they read the same on every device.
+
+### Sample data
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | `/demo/sample-data` | `201` `{ readings, appointments }`; `409 SAMPLE_DATA_EXISTS` if the account already has readings |
+
 ### Reports
 
 `date` is optional and defaults to today (in `APP_TIMEZONE`). It cannot be in the future.
@@ -395,7 +438,7 @@ When there are no readings, `isEmpty` is `true`, `stats` is `null` and `readings
 
 ### Common error codes
 
-`VALIDATION_ERROR` (400), `UNAUTHORIZED` / `TOKEN_EXPIRED` / `INVALID_TOKEN` / `INVALID_CREDENTIALS` (401), `CSRF_REJECTED` (403), `READING_NOT_FOUND` / `NOT_FOUND` (404), `EMAIL_TAKEN` / `DUPLICATE_TIME_SLOT` / `DAILY_LIMIT_REACHED` (409), `TOO_MANY_REQUESTS` (429), `INTERNAL_SERVER_ERROR` (500), `DATABASE_UNAVAILABLE` (503).
+`VALIDATION_ERROR` (400), `UNAUTHORIZED` / `TOKEN_EXPIRED` / `INVALID_TOKEN` / `INVALID_CREDENTIALS` (401), `CSRF_REJECTED` (403), `READING_NOT_FOUND` / `APPOINTMENT_NOT_FOUND` / `NOT_FOUND` (404), `EMAIL_TAKEN` / `DUPLICATE_TIME_SLOT` / `DAILY_LIMIT_REACHED` / `APPOINTMENT_LIMIT_REACHED` / `SAMPLE_DATA_EXISTS` (409), `TOO_MANY_REQUESTS` (429), `INTERNAL_SERVER_ERROR` (500), `DATABASE_UNAVAILABLE` (503).
 
 ---
 
@@ -405,12 +448,17 @@ When there are no readings, `isEmpty` is `true`, `stats` is `null` and `readings
 
 1. In Render choose **New → Blueprint** and select this repository. Apply the blueprint.
 2. Wait for `sweety-api` and `sweety-web` to go live. The API applies database migrations on start.
-3. If Render gave the services different hostnames than `sweety-web.onrender.com` / `sweety-api.onrender.com`, set `CLIENT_URL` on the API to the frontend URL, change the `/api/*` rewrite destination on the frontend (Redirects/Rewrites tab) to the API URL, and redeploy.
+3. Render usually adds a suffix to the hostnames (for example `sweety-web-3nao.onrender.com`). Put the real frontend URL in `CLIENT_URL` on the API service, and the real API URL in the `/api/*` rewrite destination on the frontend, in `render.yaml`, then push.
 4. Open the frontend URL and register an account.
 
-Notes: the frontend proxies `/api` so the auth cookie stays first-party. On Render's free plan the API sleeps when idle (first request is slow) and the free PostgreSQL database expires after 30 days. Appointments are stored in the browser, not the database.
+Notes:
+- The frontend proxies `/api` so the auth cookie stays first-party.
+- New database migrations are applied automatically each time the API starts.
+- On Render's free plan the API sleeps when idle (the first request is slow) and **the free PostgreSQL database expires 30 days after it is created**. To keep running for free, move `DATABASE_URL` to a non-expiring free Postgres such as Neon or Supabase.
 
 ## Screenshots
+
+> These screenshots were taken before the redesign (orange theme, mascot, new dashboard and readings layout), so the live app looks different.
 
 | | |
 |---|---|
@@ -443,12 +491,14 @@ Notes: the frontend proxies `/api` so the auth cookie stays first-party. On Rend
 - The rate limiter uses in-memory storage, so limits reset on restart and are not shared across multiple API instances.
 - The frontend bundle is a single chunk (~900 kB before gzip, mostly Recharts); route-level code splitting would shrink the first load.
 - No password reset or email verification.
+- Reminders and browser notifications only work while Sweety is open in a tab, and the reminder times are fixed.
+- The food plan is a fixed list of general ideas and is not personalised.
 
 ### What I would improve with more time
 
 - Refresh tokens with rotation and a server-side revocation list.
 - Redis caching of report results, invalidated when a reading changes.
-- A BullMQ job that logs a daily reminder for users with fewer than four readings.
+- Reminders that arrive when the app is closed: web push or email, which needs a notification service.
 - A doctor role with read-only access to assigned patients' reports.
 - CSV/PDF export of reports and configurable units (mg/dL ↔ mmol/L).
 - Playwright end-to-end tests in CI and route-level code splitting.

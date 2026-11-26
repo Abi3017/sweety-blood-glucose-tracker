@@ -5,7 +5,7 @@
  * Values are illustrative sample data only – not medical data.
  *
  * Demo login: demo@sweety.app / Demo@1234
- * Re-running the seed resets the demo user's readings.
+ * Re-running the seed resets the demo user's readings and appointments.
  */
 const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
@@ -72,6 +72,20 @@ async function main() {
   }
 
   await prisma.reading.createMany({ data: readings });
+
+  // Two sample appointments: one upcoming, one past.
+  const isoDay = (offset) => {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() + offset);
+    return d.toISOString().slice(0, 10);
+  };
+  await prisma.appointment.deleteMany({ where: { userId: user.id } });
+  await prisma.appointment.createMany({
+    data: [
+      { userId: user.id, doctor: 'Dr. Meera Rao', specialty: 'Endocrinologist', date: isoDay(3), time: '16:30', location: 'City Care Hospital', notes: 'Bring this month\u2019s readings.' },
+      { userId: user.id, doctor: 'Dr. Arun Kumar', specialty: 'General physician', date: isoDay(-12), time: '10:00', location: 'Green Valley Clinic', notes: '' },
+    ],
+  });
 
   console.log(`Seeded ${readings.length} readings for ${DEMO_USER.email} (password: ${DEMO_USER.password}).`);
 }
