@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ClipboardCopy, Plus, Stethoscope } from 'lucide-react';
 import AppointmentForm from '../components/appointments/AppointmentForm';
@@ -37,6 +37,11 @@ export default function Appointments() {
   const [editing, setEditing] = useState(params.get('new') ? {} : null);
   const [toDelete, setToDelete] = useState(null);
   const [busy, setBusy] = useState(false);
+
+  // Opens the form when the page is reached (or re-visited) with ?new=1.
+  useEffect(() => {
+    if (params.get('new')) setEditing((current) => current ?? {});
+  }, [params]);
 
   useLegacyAppointmentImport(user.id, (count) => {
     toast.success(`Moved ${count} appointment${count === 1 ? '' : 's'} from this browser to your account.`);
@@ -123,7 +128,7 @@ export default function Appointments() {
       {appointments.data && (
         <div className="grid items-start gap-6 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-7">
-            <NextAppointment appointment={next} large />
+            <NextAppointment appointment={next} large onAdd={() => setEditing({})} />
 
             <section aria-label="Upcoming appointments">
               <h2 className="mb-3 px-1 text-base font-semibold text-slate-900">Upcoming</h2>

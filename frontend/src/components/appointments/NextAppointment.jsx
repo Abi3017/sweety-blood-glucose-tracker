@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarClock, MapPin, Plus } from 'lucide-react';
 import { daysUntil, describeWhen } from '../../utils/appointments';
 
+const addClass = 'mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-200 text-sm font-medium text-slate-700 transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700';
+
 /** Highlight card for the soonest upcoming appointment, or an invitation to add one. */
-export default function NextAppointment({ appointment, large = false }) {
+export default function NextAppointment({ appointment, large = false, onAdd }) {
   if (!appointment) {
     return (
       <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm">
@@ -16,10 +18,18 @@ export default function NextAppointment({ appointment, large = false }) {
             <p className="text-xs text-slate-500">Nothing scheduled</p>
           </div>
         </div>
-        <Link to="/appointments?new=1" className="mt-4 flex h-11 items-center justify-center gap-2 rounded-full border border-slate-200 text-sm font-medium text-slate-700 transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700">
-          <Plus className="h-4 w-4" aria-hidden />
-          Add appointment
-        </Link>
+        {/* On the appointments page the form opens in place; elsewhere this links there. */}
+        {onAdd ? (
+          <button type="button" onClick={onAdd} className={addClass}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Add appointment
+          </button>
+        ) : (
+          <Link to="/appointments?new=1" className={addClass}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Add appointment
+          </Link>
+        )}
       </div>
     );
   }
