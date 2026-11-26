@@ -399,6 +399,17 @@ When there are no readings, `isEmpty` is `true`, `stats` is `null` and `readings
 
 ---
 
+## Deploying (Render)
+
+`render.yaml` is a Render Blueprint that creates a PostgreSQL database, the API (Docker) and the static frontend.
+
+1. In Render choose **New → Blueprint** and select this repository. Apply the blueprint.
+2. Wait for `sweety-api` and `sweety-web` to go live. The API applies database migrations on start.
+3. If Render gave the services different hostnames than `sweety-web.onrender.com` / `sweety-api.onrender.com`, set `CLIENT_URL` on the API to the frontend URL, change the `/api/*` rewrite destination on the frontend (Redirects/Rewrites tab) to the API URL, and redeploy.
+4. Open the frontend URL and register an account.
+
+Notes: the frontend proxies `/api` so the auth cookie stays first-party. On Render's free plan the API sleeps when idle (first request is slow) and the free PostgreSQL database expires after 30 days. Appointments are stored in the browser, not the database.
+
 ## Screenshots
 
 | | |
