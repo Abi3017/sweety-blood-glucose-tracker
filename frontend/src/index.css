@@ -183,6 +183,10 @@ html.dark {
 }
 html.dark .bg-white,
 html.dark [class*='bg-white/'] { background-color: rgb(17 28 51 / 0.92); }
+/* Gradient cards use from-/via-white; keep those stops dark so light text stays readable. */
+html.dark .from-white { --tw-gradient-from: #111c33; }
+html.dark .via-white { --tw-gradient-via: #111c33; }
+html.dark .to-white { --tw-gradient-to: #111c33; }
 html.dark .ring-track { stroke: #25344f; }
 html.dark .blob { opacity: 0.18; }
 html.dark .skeleton { background: linear-gradient(100deg, #16233b 30%, #1e2f4d 50%, #16233b 70%); background-size: 200% 100%; }
