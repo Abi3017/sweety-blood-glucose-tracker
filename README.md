@@ -463,10 +463,15 @@ Notes:
 
 ## Screenshots
 
-> These screenshots were taken before the redesign (orange theme, mascot, new dashboard and readings layout), so the live app looks different.
-
 | | |
 |---|---|
+| Login ![Login](docs/screenshots/01-login.png) | Dashboard ![Dashboard](docs/screenshots/02-dashboard.png) |
+| Reading history (table) ![Readings table](docs/screenshots/03-readings.png) | Reading history (timeline) ![Readings timeline](docs/screenshots/03b-readings-timeline.png) |
+| Reports ![Reports](docs/screenshots/04-reports.png) | Doctor appointments ![Appointments](docs/screenshots/05-appointments.png) |
+| Food plan ![Food plan](docs/screenshots/06-food-plan.png) | Profile ![Profile](docs/screenshots/07-profile.png) |
+| Mobile dashboard ![Mobile dashboard](docs/screenshots/08-mobile-dashboard.png) | Dark mode ![Dark mode](docs/screenshots/09-dark-dashboard.png) |
+
+---|---|
 | Login ![Login](docs/screenshots/01-login.png) | Registration validation ![Register](docs/screenshots/00-register-validation.png) |
 | Dashboard ![Dashboard](docs/screenshots/02-dashboard.png) | Reading history ![Readings](docs/screenshots/03-readings.png) |
 | Add reading with API validation error ![Add reading](docs/screenshots/07-add-reading-errors.png) | Daily report ![Daily report](docs/screenshots/04-report-daily.png) |
