@@ -11,7 +11,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Quick navigation"
-      className="fixed inset-x-4 bottom-4 z-30 mx-auto flex max-w-sm items-center justify-between rounded-full border border-slate-200/70 bg-white/95 px-3 py-2 shadow-xl shadow-slate-900/10 backdrop-blur md:hidden"
+      className="fixed inset-x-4 bottom-4 z-30 mx-auto flex max-w-sm items-center justify-between rounded-full border border-slate-200/70 bg-white/95 px-3 py-2 shadow-xl shadow-slate-900/10 backdrop-blur lg:hidden"
     >
       <NavLink to="/dashboard" className={item} aria-label="Dashboard">
         <LayoutDashboard className="h-5 w-5" />

@@ -126,8 +126,8 @@ export default function Appointments() {
       )}
 
       {appointments.data && (
-        <div className="grid items-start gap-6 lg:grid-cols-12">
-          <div className="space-y-6 lg:col-span-7">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+          <div className="min-w-0 space-y-6 lg:col-span-7">
             <NextAppointment appointment={next} large onAdd={() => setEditing({})} />
 
             <section aria-label="Upcoming appointments">
@@ -157,7 +157,7 @@ export default function Appointments() {
             )}
           </div>
 
-          <Card className="p-5 lg:col-span-5">
+          <Card className="min-w-0 p-5 lg:col-span-5">
             <h2 className="text-base font-semibold text-slate-900">Take this to your visit</h2>
             <p className="mt-1 text-sm text-slate-500">A quick summary of this month’s readings.</p>
             {summary.loading && <div className="skeleton mt-4 h-28" aria-hidden="true" />}

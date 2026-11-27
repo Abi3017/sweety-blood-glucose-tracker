@@ -122,9 +122,9 @@ export default function Dashboard() {
       )}
 
       {!daily.loading && report && (
-        <div className="grid items-start gap-6 lg:grid-cols-12">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
           {/* Left: score ring and summary */}
-          <div className="space-y-6 lg:col-span-4">
+          <div className="min-w-0 space-y-6 lg:col-span-4">
             <ProgressSummary done={recorded} total={MAX_READINGS_PER_DAY} streak={streak} message={message} />
 
             <section aria-label="Summary">
@@ -146,7 +146,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right: week, slots and day chart */}
-          <div className="space-y-6 lg:col-span-8">
+          <div className="min-w-0 space-y-6 lg:col-span-8">
             <Card className="p-5">
               <SectionTitle right={<span className="text-xs font-medium text-slate-400">{recorded} of {MAX_READINGS_PER_DAY} recorded</span>}>Schedule</SectionTitle>
               <WeekStrip date={date} onSelect={setDate} />
@@ -189,8 +189,8 @@ export default function Dashboard() {
       )}
 
       {!monthly.loading && monthly.data && (
-        <div className="grid items-start gap-6 lg:grid-cols-12">
-          <Card className="p-5 lg:col-span-4">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+          <Card className="min-w-0 p-5 lg:col-span-4">
             <SectionTitle>Readings by time slot</SectionTitle>
             {monthly.data.isEmpty ? (
               <EmptyState mascot icon={LineChartIcon} title="No readings yet" description="Log a reading and your monthly breakdown will appear here." />
@@ -199,7 +199,7 @@ export default function Dashboard() {
             )}
           </Card>
 
-          <Card className="p-5 lg:col-span-8">
+          <Card className="min-w-0 p-5 lg:col-span-8">
             <SectionTitle right={<span className="text-xs text-slate-500">{formatRange(monthly.data.range)}</span>}>This month so far</SectionTitle>
             {monthly.data.isEmpty ? (
               <EmptyState icon={LineChartIcon} title="No readings this month yet" description="Your monthly trend will appear here." />

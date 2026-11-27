@@ -41,7 +41,7 @@ export default function Navbar() {
           <Logo />
         </Link>
 
-        <div className="hidden items-center gap-1 rounded-full bg-slate-100 p-1 md:flex">
+        <div className="hidden items-center gap-1 rounded-full bg-slate-100 p-1 lg:flex">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} className={linkClass} title={label} aria-label={label}>
               <Icon className="h-4 w-4" aria-hidden />
@@ -50,7 +50,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <ThemeToggle />
           <NavLink
             to="/profile"
@@ -76,10 +76,10 @@ export default function Navbar() {
           </button>
         </div>
 
-        <ThemeToggle className="md:hidden" />
+        <ThemeToggle className="lg:hidden" />
         <button
           type="button"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="mobile-menu"
@@ -90,7 +90,7 @@ export default function Navbar() {
       </nav>
 
       {open && (
-        <div id="mobile-menu" className="mx-auto mt-2 max-w-7xl rounded-3xl border border-slate-200/70 bg-white px-4 pb-4 pt-2 shadow-lg md:hidden">
+        <div id="mobile-menu" className="mx-auto mt-2 max-w-7xl rounded-3xl border border-slate-200/70 bg-white px-4 pb-4 pt-2 shadow-lg lg:hidden">
           <div className="flex flex-col gap-1">
             {[...NAV_ITEMS, { to: '/profile', label: 'Profile', icon: UserRound }].map(({ to, label, icon: Icon }) => (
               <NavLink key={to} to={to} className={linkClass} onClick={() => setOpen(false)}>
